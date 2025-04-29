@@ -1,65 +1,102 @@
-API Security Checklist
-Checklist of the most important security countermeasures when designing, testing, and releasing your API.
+# API Security Checklist
 
-Authentication
- Don't use Basic Auth. Use standard authentication instead (e.g., JWT).
- Don't reinvent the wheel in Authentication, token generation, password storage. Use the standards.
- Use Max Retry and jail features in Login.
- Use encryption on all sensitive data.
-JWT (JSON Web Token)
- Use a random complicated key (JWT Secret) to make brute forcing the token very hard.
- Don't extract the algorithm from the header. Force the algorithm in the backend (HS256 or RS256).
- Make token expiration (TTL, RTTL) as short as possible.
- Don't store sensitive data in the JWT payload, it can be decoded easily.
- Avoid storing too much data. JWT is usually shared in headers and they have a size limit.
-Access
- Limit requests (Throttling) to avoid DDoS / brute-force attacks.
- Use HTTPS on server side with TLS 1.2+ and secure ciphers to avoid MITM (Man in the Middle Attack).
- Use HSTS header with SSL to avoid SSL Strip attacks.
- Turn off directory listings.
- For private APIs, allow access only from safelisted IPs/hosts.
-Authorization
-OAuth
- Always validate redirect_uri server-side to allow only safelisted URLs.
- Always try to exchange for code and not tokens (don't allow response_type=token).
- Use state parameter with a random hash to prevent CSRF on the OAuth authorization process.
- Define the default scope, and validate scope parameters for each application.
-Input
- Use the proper HTTP method according to the operation: GET (read), POST (create), PUT/PATCH (replace/update), and DELETE (to delete a record), and respond with 405 Method Not Allowed if the requested method isn't appropriate for the requested resource.
- Validate content-type on request Accept header (Content Negotiation) to allow only your supported format (e.g., application/xml, application/json, etc.) and respond with 406 Not Acceptable response if not matched.
- Validate content-type of posted data as you accept (e.g., application/x-www-form-urlencoded, multipart/form-data, application/json, etc.).
- Validate user input to avoid common vulnerabilities (e.g., XSS, SQL-Injection, Remote Code Execution, etc.).
- Don't use any sensitive data (credentials, Passwords, security tokens, or API keys) in the URL, but use standard Authorization header.
- Use only server-side encryption.
- Use an API Gateway service to enable caching, Rate Limit policies (e.g., Quota, Spike Arrest, or Concurrent Rate Limit) and deploy APIs resources dynamically.
-Processing
- Check if all the endpoints are protected behind authentication to avoid broken authentication process.
- User own resource ID should be avoided. Use /me/orders instead of /user/654321/orders.
- Don't auto-increment IDs. Use UUID instead.
- If you are parsing XML data, make sure entity parsing is not enabled to avoid XXE (XML external entity attack).
- If you are parsing XML, YAML or any other language with anchors and refs, make sure entity expansion is not enabled to avoid Billion Laughs/XML bomb via exponential entity expansion attack.
- Use a CDN for file uploads.
- If you are dealing with huge amount of data, use Workers and Queues to process as much as possible in background and return response fast to avoid HTTP Blocking.
- Do not forget to turn the DEBUG mode OFF.
- Use non-executable stacks when available.
-Output
- Send X-Content-Type-Options: nosniff header.
- Send X-Frame-Options: deny header.
- Send Content-Security-Policy: default-src 'none' header.
- Remove fingerprinting headers - X-Powered-By, Server, X-AspNet-Version, etc.
- Force content-type for your response. If you return application/json, then your content-type response is application/json.
- Don't return sensitive data like credentials, passwords, or security tokens.
- Return the proper status code according to the operation completed. (e.g., 200 OK, 400 Bad Request, 401 Unauthorized, 405 Method Not Allowed, etc.).
-CI & CD
- Audit your design and implementation with unit/integration tests coverage.
- Use a code review process and disregard self-approval.
- Ensure that all components of your services are statically scanned by AV software before pushing to production, including vendor libraries and other dependencies.
- Continuously run security tests (static/dynamic analysis) on your code.
- Check your dependencies (both software and OS) for known vulnerabilities.
- Design a rollback solution for deployments.
-Monitoring
- Use centralized logins for all services and components.
- Use agents to monitor all traffic, errors, requests, and responses.
- Use alerts for SMS, Slack, Email, Telegram, Kibana, Cloudwatch, etc.
- Ensure that you aren't logging any sensitive data like credit cards, passwords, PINs, etc.
- Use an IDS and/or IPS system to monitor your API requests and instances.
+> A checklist of the most important security countermeasures when designing, testing, and releasing your API.
+
+---
+
+## 🔐 Authentication
+
+- ❌ Don't use Basic Auth. Use standard authentication (e.g., JWT).
+- 🔁 Don't reinvent the wheel in authentication, token generation, and password storage — use established standards.
+- 🚫 Use max retry limits and jail features on login endpoints.
+- 🔒 Encrypt all sensitive data in transit and at rest.
+
+---
+
+## 🪪 JWT (JSON Web Token)
+
+- 🔑 Use a random, complex secret key to prevent brute-forcing.
+- ⚙️ Don't trust the algorithm in the header — enforce it server-side (e.g., `HS256`, `RS256`).
+- ⏱️ Set short token expiration times (`TTL`, `RTTL`).
+- 🕵️‍♂️ Don't store sensitive data in JWT payloads — they're easily decoded.
+- 📦 Keep JWTs small. They are often sent in headers, which have size limits.
+
+---
+
+## 🚦 Access Control
+
+- 📉 Apply request throttling to prevent DDoS and brute-force attacks.
+- 🌐 Use HTTPS with **TLS 1.2+** and strong ciphers.
+- 📛 Set `Strict-Transport-Security` (HSTS) headers to prevent SSL stripping.
+- 🚫 Disable directory listings on the server.
+- 🛂 For private APIs, allow access only from safelisted IPs or hostnames.
+
+---
+
+## ✅ Authorization / OAuth
+
+- 🔄 Validate `redirect_uri` server-side to allow only trusted URLs.
+- 🧾 Prefer exchanging authorization codes instead of tokens directly (`response_type=code` only).
+- 🧬 Use the `state` parameter with a random value to prevent CSRF.
+- 🎯 Set default scopes and validate requested scopes per application.
+
+---
+
+## 🧪 Input Validation & Handling
+
+- 🔧 Use correct HTTP methods (GET, POST, PUT, DELETE) and return `405 Method Not Allowed` for unsupported methods.
+- 🧾 Validate the `Accept` header to ensure supported formats (`406 Not Acceptable` for unsupported ones).
+- 🧼 Validate posted content-types (`application/json`, `multipart/form-data`, etc.).
+- 🧯 Sanitize and validate all user inputs to prevent XSS, SQLi, RCE, etc.
+- 🚷 Never expose credentials, passwords, tokens, or API keys in URLs — use the `Authorization` header.
+- 🔐 Encrypt data only on the server side.
+- 🌉 Use API gateways for rate-limiting, caching, and dynamic routing.
+
+---
+
+## ⚙️ Processing
+
+- 🔒 Ensure all endpoints are protected by proper authentication.
+- 👤 Avoid exposing user IDs — prefer `/me/orders` over `/user/654321/orders`.
+- 🆔 Use UUIDs instead of auto-incremented IDs.
+- 📄 Disable entity parsing in XML to prevent XXE attacks.
+- 💥 Avoid entity expansion in XML/YAML to mitigate Billion Laughs attacks.
+- 🖼️ Use CDNs for file uploads.
+- 🏗️ Use workers/queues for heavy tasks to keep APIs responsive.
+- 🚫 Turn off `DEBUG` mode in production.
+- 🧱 Use non-executable stacks where supported.
+
+---
+
+## 📤 Output
+
+- 🧯 Send `X-Content-Type-Options: nosniff`.
+- 🚫 Send `X-Frame-Options: deny`.
+- 🛡️ Set `Content-Security-Policy: default-src 'none'`.
+- ❌ Remove fingerprinting headers (`X-Powered-By`, `Server`, `X-AspNet-Version`, etc.).
+- 📄 Explicitly set response `Content-Type` (e.g., `application/json`).
+- 🔐 Never return sensitive data (credentials, passwords, tokens).
+- 🚦 Return appropriate HTTP status codes (e.g., `200 OK`, `400 Bad Request`, `401 Unauthorized`, etc.).
+
+---
+
+## 🏗️ CI & CD
+
+- 🔍 Audit code with unit/integration test coverage.
+- 🧑‍⚖️ Implement peer reviews — no self-approvals.
+- 🧼 Run antivirus/static scans on all components and dependencies.
+- 🔐 Use continuous security testing (SAST/DAST).
+- 📦 Monitor dependencies for known vulnerabilities.
+- 🛠️ Design and test rollback strategies.
+
+---
+
+## 📊 Monitoring
+
+- 🗃️ Centralize logs across services and components.
+- 📡 Monitor traffic, errors, and request/response logs.
+- 🚨 Set up alerts via SMS, Email, Slack, Telegram, Kibana, CloudWatch, etc.
+- 🔏 Avoid logging sensitive data like passwords, PINs, and credit cards.
+- 🕵️ Use IDS/IPS systems to monitor and alert on suspicious API activity.
+
+---
